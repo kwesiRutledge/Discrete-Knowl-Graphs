@@ -6,7 +6,7 @@ function [results] = run_experiment( varargin )
 	%	Inputs:
 	%
 	%	Usage:
-	%		run_experiment(1,)
+	%		run_experiment(1)
 
 	% Add experiments and functions to the path
 	include_libs('arcs')
@@ -17,7 +17,7 @@ function [results] = run_experiment( varargin )
 	end
 
 	try
-		empty_function_experiments()
+		empty_function_experiments_lcsts()
 	catch
 		addpath('./experiments/')
 	end

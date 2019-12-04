@@ -14,6 +14,9 @@ function [out_sys,sq_dim] = get_simple_square_sys(varargin)
 			case 'verbosity'
 				verbosity = varargin{arg_idx+1};
 				arg_idx = arg_idx + 2;
+			case 'sq_dim'
+				sq_dim = varargin{arg_idx+1};
+				arg_idx = arg_idx + 2;
 			otherwise
 				error(['Unrecognized input to get_simple_square_sys(): ' varargin{arg_idx} ])
 		end
@@ -27,7 +30,10 @@ function [out_sys,sq_dim] = get_simple_square_sys(varargin)
 	%% Constants %%
 	%%%%%%%%%%%%%%%
 
-	sq_dim = 20; %Numbers of rows / columns in the square state space.
+	if ~exist('sq_dim')
+		sq_dim = 20; %Numbers of rows / columns in the square state space.
+	end
+
 	num_cardinal_directions = 4; 	%Number of cardinal directions North, East, South, West
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -134,7 +140,7 @@ function [out_sys,sq_dim] = get_simple_square_sys(varargin)
 					end
 				end
 			otherwise
-				body
+				error('This switch statement should never reach this condition!')
 		end
 		%Compute Transition Matrices
 		ts_i.trans_array_enable();
@@ -167,13 +173,40 @@ function [out_sys,sq_dim] = get_simple_square_sys(varargin)
 	%% Create a number of outputs %%
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-	n_y = (sq_dim/2)^2;
+	bands = [1,1,1,2,2,3];
+	n_y = length(bands);
 
-	M_i = [];
-	temp_mat_i = kron(eye(sq_dim/2),ones(2,1));
-	temp_mat_i = [ temp_mat_i ; temp_mat_i ];
+	if sum(bands) ~= (sq_dim/2)
+		error('Bands do not match the dimension of the square!')
+	end
 
-	M_i = kron(eye(sq_dim/2),temp_mat_i);
+	M_i = zeros(ts_i.n_s,n_y);
+	for state_idx = 1:ts_i.n_s
+		for band_idx = 1:length(bands)
+			band_lim_low = sum(bands([1:band_idx]));
+			band_lim_high = (sq_dim) - sum(bands([1:band_idx]));
+
+			[agent_coords(1),agent_coords(2)] = ind2sub([sq_dim,sq_dim],state_idx);
+
+			if agent_coords(1) <= band_lim_low
+				if agent_coords(2) <= band_lim_low
+					M_i(sub2ind( [sq_dim,sq_dim] , agent_coords(1) , agent_coords(2) ) , band_idx ) = 1;
+					break;
+				elseif agent_coords(2) >= band_lim_high
+					M_i(sub2ind( [sq_dim,sq_dim] , agent_coords(1) , agent_coords(2) ) , band_idx ) = 1;
+					break;
+				end
+			elseif agent_coords(1) >= band_lim_high
+				if agent_coords(2) <= band_lim_low
+					M_i(sub2ind( [sq_dim,sq_dim] , agent_coords(1) , agent_coords(2) ) , band_idx ) = 1;
+					break;
+				elseif agent_coords(2) >= band_lim_high
+					M_i(sub2ind( [sq_dim,sq_dim] , agent_coords(1) , agent_coords(2) ) , band_idx ) = 1;
+					break;
+				end
+			end		
+		end
+	end
 
 	M = [];
 	for ts_idx = 1:length(TransSyst_arr)
