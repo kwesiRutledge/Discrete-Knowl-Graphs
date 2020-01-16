@@ -227,6 +227,22 @@ classdef Language
 
 		end
 
+		function symb_arr = get_all_symbols_at_idx(obj,idx)
+			%Description:
+			%	For each word, w, in the language 'obj', this function retrieves the symbol at idx 'idx', w[idx]
+			%	and returns the list of all such symbols.
+			%
+
+			%% Algorithm %%
+
+			symb_arr = [];
+			for word_idx = 1:length(obj.words)
+				symb_arr = [symb_arr,obj.words{word_idx}];
+			end
+			symb_arr = unique(symb_arr);
+
+		end
+
 	end
 
 end

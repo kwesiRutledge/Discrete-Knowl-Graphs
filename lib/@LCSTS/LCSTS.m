@@ -24,8 +24,9 @@ classdef LCSTS
 		TransSystems;
 		Language;
 		n_y;
-		ObsvFcn;
+		ObsvFcns;
 		Init;
+		n_modes;
 	end
 
 	methods
@@ -95,14 +96,69 @@ classdef LCSTS
 			%%%%%%%%%%%%%%%
 
 			L_sys.TransSystems = T;
+			L_sys.n_modes = length(T);
 			L_sys.Language = L;
 			L_sys.n_y = n_y;
-			L_sys.ObsvFcn = M;
+			L_sys.ObsvFcns = M;
 
 			if ~exist('Init')
 				L_sys.Init = [1:T(1).n_s];
 			else
 				L_sys.Init = Init;
+			end
+
+		end
+
+		function mode_list = get_modes_at_t(obj,t_in)
+			%Description:
+			%	Find all of the modes that can occur at time 't_in' and return them.
+			%	Note: The time starts at 0 in this code.
+			%
+			%Usage:
+			%	mode_list = lcsts.get_modes_at_t( 2 )
+
+			mode_list = obj.Language.get_all_symbols_at_idx(t_in+1);
+
+		end
+
+		function obsv_list = obs(varargin)
+			%Description:
+			%	Finds the observations associated with the provided state
+			%	(at a given mode and/or time, if provided)
+			%
+			%Usage
+			%	obsvs = lcsts.obs( s_in )
+			%	obsvs = lcsts.obs( s_in , t )
+			%	obsvs = lcsts.obs( s_in , t , word_idx )
+
+			%% Input Processing %%
+
+			obj = varargin{1};
+			s_list = varargin{2};
+
+			switch nargin
+				case 2
+					t_list = [1:obj.Language.find_longest_length()];
+					word_list = [1:obj.n_modes];
+				case 3
+					t_list = varargin{3};
+					word_list = [1:obj.n_modes];
+				case 4
+					t_list = varargin{3};
+					word_list = varargin{4};
+				otherwise
+					error('Unexpected number of arguments!')
+			end
+
+			%% Algorithm %%
+
+			obsv_list = [];
+			for state = s_list
+				for t = t_list
+					for word_idx = word_list
+						obsv_list = [obsv_list, find( obj.ObsvFcns(state,:, obj.Language.words{word_idx}(t)) )];
+					end
+				end
 			end
 
 		end

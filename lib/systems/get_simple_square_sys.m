@@ -3,6 +3,10 @@ function [out_sys,sq_dim] = get_simple_square_sys(varargin)
 	%Description:
 	%	This generates a simple square system
 	%
+	%Usage:
+	%	[ lcsts0 , sq_dim ] = get_simple_square_sys('verbosity',0)
+	%	[ lcsts0 , sq_dim ] = get_simple_square_sys('init_flag',false)
+
 
 	%%%%%%%%%%%%%%%%%%%%%%
 	%% Input Processing %%
@@ -24,6 +28,10 @@ function [out_sys,sq_dim] = get_simple_square_sys(varargin)
 
 	if ~exist('verbosity')
 		verbosity = 0;
+	end
+
+	if ~exist('init_flag')
+		init_flag = true;
 	end
 
 	%%%%%%%%%%%%%%%
@@ -149,6 +157,19 @@ function [out_sys,sq_dim] = get_simple_square_sys(varargin)
 
 	end
 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%% Create Initial State Set %%
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	if init_flag
+		s0_width = 8;
+		S0 = [];
+		for row_idx = (sq_dim/2)+[-(s0_width/2)+1:(s0_width/2)]
+			for col_idx = (sq_dim/2)+[-(s0_width/2)+1:(s0_width/2)]
+				S0 = [S0; sub2ind([sq_dim,sq_dim],row_idx,col_idx) ];
+			end
+		end
+	end
+
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	%% Summarize Transition Systems %%
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -218,5 +239,9 @@ function [out_sys,sq_dim] = get_simple_square_sys(varargin)
 	%%%%%%%%%%%%%%%%%%%%%
 
 	out_sys = LCSTS(TransSyst_arr,L1,n_y,M);
+
+	if init_flag
+		out_sys = LCSTS(TransSyst_arr,L1,n_y,M,S0);
+	end
 
 end

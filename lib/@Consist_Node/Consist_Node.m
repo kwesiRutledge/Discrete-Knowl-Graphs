@@ -6,42 +6,80 @@ classdef Consist_Node
 	%	cn = Consist_Node(t,L,Y)
 	%
 	%Member Variables:
-	%	Y_History: 				The history of measurements that corresponds with this node.
-	%	Feas_State_Histories: 	The possible sequences of states that correspond with this node.
+	%	BehaviorSet: 			The possible sequences of states that correspond with this node.
 	%	t: 						The time associated with this node.
-	%	ModeSignalLang: 		The possible mode signals that could be leading to this measurement history.
+	%	ConsistentInformation: 	The information which unites the set of behaviors.
 	
 	properties
-		Y_History;
-		Feas_State_Histories;
+		BehaviorSet;
 		t;
-		ModeSignalLang;
+		ConsistentInformation;
 	end
 
 	methods
 
-		function C_Node = Consist_Node(t_in,L,output_arr)
+		function C_Node = Consist_Node(varargin)
 			%Description:
 			%	A Consistency Node can be defined as a tuple of the time (t) at which the consistency decision is made and
-			%	language of mode signals that can lead to that consistency decision being held at time t (L).
+			%	the information (information_Set) that is being held at time t.
 			%	Because this node is designed for discrete state spaces, we can also define the set of states that are associated with this node!
 			%
 			%Usage:
-			%	cn0 = Consist_Node(t0,L0,S0)
+			%	node = Consist_Node(beh_list_in,info_set)
+			%	node = Consist_Node(beh_list_in,info_set,parent_node_idx)
 			%
 			%Inputs:
 			%	T - A set of TransSyst objects.
 
-			%% Input Processing
-			if ~isa(L,'Language')
-				error('Input L is not a ''Language'' object.')
+			%% Input Processing %%
+
+			beh_list_in = varargin{1};
+			info_set = varargin{2};
+
+			switch nargin
+				case 2
+					parent_node_idx = [];
+					child_nodes_idcs = []; 
+				case 3
+					parent_node_idx = varargin{3};
+					child_nodes_idcs = []; 
+				case 4
+					parent_node_idx = varargin{3};
+					child_nodes_idcs = varargin{4};
+				otherwise
+					error('Unexpected number of arguments.')
+			end
+
+			%% Input Checking %%
+
+			if ~isa(beh_list_in,'LCSTS_Behavior')
+				error('The behavior in ''beh_list_in'' should be of type LCSTS_Behavior.')
 			end
 
 			%% Algorithm
+			C_Node.BehaviorSet = beh_list_in; 
+			C_Node.t = beh_list_in(1).t;
+			C_Node.ConsistentInformation = info_set;
 
-			C_Node.ModeSignalLang = L;
-			C_Node.t = t_in;
-			C_Node.Y_History = output_arr;
+		end
+
+		function [ tf ] = contains_behavior( obj , beh_query )
+			%Description:
+			%	Identifies if the provided behavior (beh_query) exists in the Consistency Node.
+			%
+			%Usage:
+			%	tf = cn.contains_behavior( lcsts_beh0 )
+
+			%% Input Processing %%
+
+			%% Algorithm %%
+			tf = false;
+
+			for beh_idx = 1:length(obj.BehaviorSet)
+				if obj.BehaviorSet(beh_idx) == beh_query
+					tf = true;
+				end
+			end
 
 		end
 
